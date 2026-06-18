@@ -1,0 +1,67 @@
+# TenantGuard dogfoods itself: on every PR it runs its own scan → review-pr over
+# the PR's changed files and publishes the verdict (Ready / Not Ready / Needs
+# Verification) to the run summary. Report-only (008's default) — findings never
+# fail the check; only a TenantGuard *error* (non-zero exit) red-Xes the job.
+#
+# This is the AC-008 consumer opt-in from spec 008, with TenantGuard as its own
+# first consumer. The tooling IS this repo, so the CLI runs directly via tsx from
+# the checkout (no published binary yet — see ADR-007).
+name: TenantGuard
+
+on:
+  pull_request:
+
+permissions:
+  contents: read           # read the code (read-only; no writes)
+  pull-requests: read      # `gh pr view` lists the PR's changed files
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the PR head            # gates read file CONTENTS from the working tree
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Node + pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: corepack enable
+
+      - name: Install workspace deps           # so @tenantguard/* imports resolve under tsx
+        run: corepack pnpm install --frozen-lockfile
+
+      # PR-NUMBER mode (not --local-diff): changed files come from `gh pr view`
+      # (relative to the PR base). --local-diff would be empty after a CI checkout
+      # (working tree == HEAD) and falsely report "Ready" on every PR.
+      - name: Run TenantGuard (scan → review-pr <number>)
+        env:
+          GH_TOKEN: ${{ github.token }}        # `gh` auth in CI (no stored token)
+        run: |
+          corepack pnpm dlx tsx packages/cli/src/bin.ts scan --out .tenantguard
+          corepack pnpm dlx tsx packages/cli/src/bin.ts \
+            review-pr "${{ github.event.pull_request.number }}" --out .tenantguard
+
+      - name: Publish verdict to the run summary
+        if: always()
+        run: |
+          if [ -f .tenantguard/review.md ]; then
+            cat .tenantguard/review.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "TenantGuard did not produce a review (see the step logs)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Report-only: critical-gate-blocking is OFF. To enable it later, set the repo
+      # variable TENANTGUARD_FAIL_ON_CRITICAL=true (Settings → Variables) — then a
+      # severity:"critical" finding fails the check (008 contracts/action-inputs.md).
+      - name: Enforce critical gates (opt-in)
+        if: ${{ vars.TENANTGUARD_FAIL_ON_CRITICAL == 'true' }}
+        run: |
+          crit=$(jq '[.findings[] | select(.severity == "critical")] | length' .tenantguard/review.json)
+          echo "critical findings: $crit"
+          if [ "$crit" -gt 0 ]; then
+            echo "::error::TenantGuard: $crit critical gate finding(s) — failing the check."
+            exit 1
+          fi
