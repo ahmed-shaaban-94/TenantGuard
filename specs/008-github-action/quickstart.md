@@ -33,7 +33,7 @@ jobs:
       - name: Set up Node + pnpm
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22          # pnpm@11 (corepack-pinned) requires Node >=22.13
       - run: corepack enable
 
       # TenantGuard's CLI is TypeScript (no published binary yet) — run it via tsx (ADR-007).
