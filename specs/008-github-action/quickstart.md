@@ -48,8 +48,9 @@ jobs:
         run: cat .tenantguard/review.md >> "$GITHUB_STEP_SUMMARY"
 
       # Optional critical-gate-blocking: fail ONLY on a severity:"critical" finding (not the verdict).
+      # Gated by a repo variable (Settings → Variables) — `inputs` is NOT available on pull_request.
       - name: Enforce critical gates
-        if: ${{ inputs.fail-on-critical || false }}
+        if: ${{ vars.TENANTGUARD_FAIL_ON_CRITICAL == 'true' }}
         run: |
           crit=$(jq '[.findings[] | select(.severity == "critical")] | length' .tenantguard/review.json)
           echo "critical findings: $crit"
@@ -64,6 +65,11 @@ Notes:
 - **`review-pr` runs the gates internally** — no separate `gates` step is needed.
 - **Critical-blocking keys off `severity:"critical"`**, not the verdict: a `not_ready` verdict with only
   `high`/`medium` findings still **passes** (report-only), satisfying SC-003.
+- **Enable critical-blocking** by setting the repo variable `TENANTGUARD_FAIL_ON_CRITICAL=true`
+  (Settings → Variables). `inputs.*` is **not** available on a `pull_request` workflow — use `vars.*`.
+- **Error ≠ Not-Ready.** A non-zero CLI step (couldn't run — e.g. not a Git repo, no map) **fails the
+  job** (FR-008/SC-007); a Not-Ready *verdict* (ran fine, exit 0) does not by itself fail. The summary
+  step uses `if: always()` so it still renders on failure.
 - **Read-only**: `permissions: contents: read`; the job never commits, pushes, comments, or labels.
 
 ---

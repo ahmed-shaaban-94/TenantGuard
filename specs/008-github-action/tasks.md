@@ -31,7 +31,7 @@ implement phase adds the **one new repo file (ADR-007)** and performs documentat
 
 **Purpose**: The single new repo artifact — the CI runtime/packaging decision.
 
-- [ ] T001 Write **ADR-007** (`docs/decisions/ADR-007-ci-runtime.md`): run the unbuilt TypeScript CLI in
+- [X] T001 Write **ADR-007** (`docs/decisions/ADR-007-ci-runtime.md`): run the unbuilt TypeScript CLI in
   CI via corepack pnpm + `tsx` (no published binary / no live workflow yet); a packaged composite Action
   / published `tenantguard` binary is a later additive step. Mirrors ADR-002…006 format. (Research R4.)
 
@@ -44,8 +44,8 @@ phase confirms it against the REAL upstream shapes.
 
 **⚠️ CRITICAL**: Both stories consume `review.json`/`review.md`; the contract must match their real shape.
 
-- [ ] T002 Verify `contracts/ci-summary.md` against the REAL `review.md` produced by 007 (`packages/review/src/render.ts`): section order (verdict → findings → scope → changed files → verdict line), and that evidence shows `signal` only (no raw secret). Correct the contract if it drifts.
-- [ ] T003 Verify `contracts/action-inputs.md`'s check-status rule against the REAL `review.json` shape (`packages/review/src/schema.ts`): `findings[].severity` is the field driving critical-blocking; `verdict` ∈ {ready,not_ready,needs_verification}; a Not-Ready verdict exits 0 (007 contract). Correct if it drifts.
+- [X] T002 Verify `contracts/ci-summary.md` against the REAL `review.md` produced by 007 (`packages/review/src/render.ts`): section order (verdict → findings → scope → changed files → verdict line), and that evidence shows `signal` only (no raw secret). Correct the contract if it drifts.
+- [X] T003 Verify `contracts/action-inputs.md`'s check-status rule against the REAL `review.json` shape (`packages/review/src/schema.ts`): `findings[].severity` is the field driving critical-blocking; `verdict` ∈ {ready,not_ready,needs_verification}; a Not-Ready verdict exits 0 (007 contract). Correct if it drifts.
 
 **Checkpoint**: The contract matches what 007 actually emits — the example workflow can rely on it.
 
@@ -61,14 +61,14 @@ existing CLI, with no repo writes.
 
 ### Implementation for User Story 1 (documentation)
 
-- [ ] T004 [US1] In `quickstart.md`, finalize the **example workflow**: `pull_request` trigger;
+- [X] T004 [US1] In `quickstart.md`, finalize the **example workflow**: `pull_request` trigger;
   **checkout PR head** (`github.event.pull_request.head.sha`, `fetch-depth: 0` — load-bearing per R2);
   `scan → review-pr` via `pnpm dlx tsx packages/cli/src/bin.ts`; publish `review.md` to
   `$GITHUB_STEP_SUMMARY` with `if: always()`. (FR-001/002/003.)
-- [ ] T005 [US1] In the example workflow, set `permissions: contents: read` and include **no** mutating
+- [X] T005 [US1] In the example workflow, set `permissions: contents: read` and include **no** mutating
   step (no commit/push/merge/comment/label/issue) — the read-only guarantee (FR-005, SC-004) made
   explicit in the YAML.
-- [ ] T006 [US1] Validate the US1 chain against reality: confirm `scan → review-pr` (no separate `gates`
+- [X] T006 [US1] Validate the US1 chain against reality: confirm `scan → review-pr` (no separate `gates`
   step) is the minimal correct chain (review-pr runs gates internally) and that omitting the PR-head
   checkout would yield a false "Ready" — cross-check `specs/007-pr-reviewer/contracts/review-cli.md` +
   the 007 e2e. Note the finding in `quickstart.md` (Notes).
@@ -88,14 +88,14 @@ finding (check fails) vs one with only `high`/`medium` findings (check passes, f
 
 ### Implementation for User Story 2 (documentation)
 
-- [ ] T007 [US2] In `quickstart.md`, finalize the **critical-gate-blocking** step: gated by a
+- [X] T007 [US2] In `quickstart.md`, finalize the **critical-gate-blocking** step: gated by a
   `fail-on-critical` input (default off); `jq '[.findings[] | select(.severity=="critical")] | length'`
   over `review.json`; exit 1 (with `::error::`) iff count > 0. Keyed off `severity`, NOT the verdict and
   NOT the exit code. (FR-004, SC-002, SC-003.)
-- [ ] T008 [US2] Document in `contracts/action-inputs.md` (already drafted) the authoritative check rule:
+- [X] T008 [US2] Document in `contracts/action-inputs.md` (already drafted) the authoritative check rule:
   error → fail; `fail-on-critical` ∧ ∃ critical → fail; else pass. Confirm it explicitly rejects
   verdict-based and exit-code-based failing (the SC-003 trap). Correct if needed.
-- [ ] T009 [US2] Add the SC-003 note to `quickstart.md`: a `not_ready` verdict with only non-critical
+- [X] T009 [US2] Add the SC-003 note to `quickstart.md`: a `not_ready` verdict with only non-critical
   findings still **passes** the check (report-only) — the verdict drives the summary, severity drives
   the check.
 
@@ -105,15 +105,15 @@ finding (check fails) vs one with only `high`/`medium` findings (check passes, f
 
 ## Phase 5: Polish & Cross-Cutting
 
-- [ ] T010 [P] Verify the **error-vs-verdict** handling in the example: a non-zero CLI step fails the job
+- [X] T010 [P] Verify the **error-vs-verdict** handling in the example: a non-zero CLI step fails the job
   (FR-008, SC-007), while a Not-Ready *verdict* (exit 0) does not by itself fail; the `if: always()`
   summary still renders on failure. Note in `quickstart.md`.
-- [ ] T011 [P] Walk the **acceptance mapping** table in `quickstart.md` end to end — every SC (SC-001…
+- [X] T011 [P] Walk the **acceptance mapping** table in `quickstart.md` end to end — every SC (SC-001…
   SC-007) maps to a concrete step/line in the example workflow; fix any gap.
-- [ ] T012 [P] Confirm **no forbidden artifacts** were created: no `.github/workflows/*.yml`, no
+- [X] T012 [P] Confirm **no forbidden artifacts** were created: no `.github/workflows/*.yml`, no
   `packages/*` change, no `package.json`/lockfile change (`git status` shows only specs/008 docs +
   `docs/decisions/ADR-007-ci-runtime.md` + the CLAUDE.md marker). (AC-008.)
-- [ ] T013 Final review: spec ↔ artifacts agree (no stale "scan → gates → review" prose; critical-block
+- [X] T013 Final review: spec ↔ artifacts agree (no stale "scan → gates → review" prose; critical-block
   keyed off severity everywhere); mark all tasks `[X]`.
 
 ---

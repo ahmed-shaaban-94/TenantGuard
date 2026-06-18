@@ -45,6 +45,15 @@ Alternatives**.
   violating **SC-003** (non-critical → pass while reported). Keying off `severity:"critical"` satisfies
   **SC-002** (critical → fail) *and* SC-003. The exit code can't drive it either: a Not-Ready review
   exits 0 (007 contract: "008 will read the verdict from `review.json`, not the process exit code").
+- **Grounding (the `jq severity=="critical"` selector matches real output)** — verified against shipped
+  code, not assumed: `severity` is the 004 `SEVERITIES` enum `["low","medium","high","critical"]`
+  (`packages/gates/src/schema.ts`), carried verbatim onto `risk` findings in 007's `review.json`
+  (`packages/review/src/schema.ts` `gateFindingSchema`). A `critical` value is genuinely produced — e.g.
+  G4's secret-in-log rule emits `risk(ID, "critical", …)` (`packages/gates/src/gates/g4-security.ts:50`),
+  and 004's TG-G9 aggregator injects a `critical` finding when any critical exists. The 007
+  `e2e-chain.test.ts` already proves `scan → review-pr` writes a real `review.json`/`review.md`. So
+  `jq '[.findings[] | select(.severity=="critical")] | length'` selects exactly the blocking findings.
+  (This is documentation-level validation — no new test is added, per AC-008 / the no-new-code decision.)
 - **Alternatives considered**:
   - *`verdict == "not_ready" → fail`* — violates SC-003. Rejected.
   - *process exit code* — Not-Ready exits 0; exit≠0 means the review couldn't run, not "unsafe".
