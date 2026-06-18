@@ -21,6 +21,18 @@ output), not the scheduling internals or language.
 
 ---
 
+## Clarifications
+
+### Session 2026-06-18
+
+- Q: What are the canonical `status` and `type` enums for a queue item? → A: `status` ∈ `ready` / `blocked` / `done` (the v0 deriver emits only `ready` / `blocked`; `done` is **reserved** for future/external marking, not emitted by the deriver); `type` ∈ `implementation` / `test` / `docs` / `migration` / `chore`.
+- Q: What shape does the router output when no task is safe? → A: `next` is always present and nullable (`next: null` when none safe), plus a `no_safe_task_reasons: string[]` field — a single stable shape, never a missing key.
+- Q: How does the router obtain "current local diff" / PR state in a local-first, read-only MVP? → A: via `@tenantguard/scanner`'s read-only git/fs primitives; diff and PR state are **optional inputs** — when absent, the factors that need them are skipped (never fabricated), consistent with FR-007.
+- Q: What is the deterministic selection ordering? → A: primary sort `score desc`; ties (equal score) broken by `blast_radius asc` → `risk asc` → `id asc` (lowest blast radius, then lowest risk, then id as the final stable key).
+- Q: Where are `queue.json` and the router decision written? → A: to the designated out-dir — `.tenantguard/queue.json` and `.tenantguard/route.json` (same convention as 003/004); `route` also prints the decision to stdout.
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 "User" is a developer/team lead asking "what is safe to do next?"
@@ -81,8 +93,8 @@ conflicts and breakage.
 - **Empty queue**: routing returns "no tasks" cleanly.
 - **All items blocked**: routing returns "no safe next task" with per-item reasons.
 - **Circular dependencies**: detected and reported, not silently looped.
-- **Ties in scoring**: resolved by a stated, deterministic tiebreak (e.g. lowest blast radius, then
-  id) so output is reproducible.
+- **Ties in scoring** (equal score): broken deterministically by `blast_radius asc` → `risk asc` →
+  `id asc`, so output is reproducible.
 - **Lock-scope overlap with current diff**: the overlapping item is deprioritized/blocked.
 
 ---
@@ -94,8 +106,8 @@ Each queue item is explicit and safe for agent handoff:
 ```text
 id              stable identifier (e.g. Q-004)
 title           short description
-status          ready | blocked | ...
-type            implementation | test | docs | ...
+status          ready | blocked | done
+type            implementation | test | docs | migration | chore
 source.evidence the finding(s)/file(s) that justify the item
 priority        triage priority
 risk            risk level of doing the work
@@ -113,8 +125,10 @@ final_report.required[]   fields the final report must include
 
 ## Router Behavior *(mandatory)*
 
-**Inputs**: current project map; risk findings; queue items; dependencies; lock scopes; current local
-diff; current PR state (if available); failed gates.
+**Inputs**: current project map; risk findings; queue items; dependencies; lock scopes; failed gates.
+**Optional inputs** (read via `@tenantguard/scanner`'s read-only git/fs primitives): current local
+diff; current PR state. When an optional input is absent, the scoring factors that depend on it are
+skipped (never fabricated), consistent with FR-007.
 
 **Scoring factors**: readiness; risk; blast radius; dependency status; validation availability; scope
 clarity; lock overlap; documentation freshness.
@@ -122,11 +136,15 @@ clarity; lock overlap; documentation freshness.
 **Output**:
 
 ```text
-next:    the single chosen item (id, title, reason[])
+next:    the single chosen item (id, title, reason[]) — always present, null when no task is safe
 blocked: list of { id, reason } for items that cannot run
+no_safe_task_reasons: string[] — why no item was selectable (empty when next is non-null)
 ```
 
-By default the router selects exactly one `next`. Ties are broken deterministically.
+By default the router selects exactly one `next`. When no item is safe, `next` is `null` and
+`no_safe_task_reasons` explains why — never an arbitrary pick. Selection is a primary sort by
+`score desc`; ties (equal score) are broken deterministically by `blast_radius asc` → `risk asc` →
+`id asc`.
 
 ---
 
@@ -145,17 +163,28 @@ By default the router selects exactly one `next`. Ties are broken deterministica
 - **FR-007**: When no item is safe, the router MUST return an explicit "no safe next task" with
   reasons, never an arbitrary pick.
 - **FR-008**: The router MUST consider dependencies, lock-scope overlap, and blast radius in selection.
-- **FR-009**: Routing MUST be deterministic, including a stated tiebreak, for unchanged input.
+- **FR-009**: Routing MUST be deterministic for unchanged input: a primary sort by `score desc`, with
+  ties (equal score) broken by `blast_radius asc` → `risk asc` → `id asc`.
 - **FR-010**: Circular dependencies MUST be detected and reported.
-- **FR-011**: Queue/router MUST run with no network access and no credentials (local-first).
+- **FR-011**: Queue/router MUST run with no network access and no credentials (local-first). Optional
+  diff/PR inputs MUST be read read-only (via the scanner primitives) and are skipped when absent.
 - **FR-012**: Queue items and router output MUST NOT contain secrets.
 - **FR-013**: Queue/router MUST be domain-neutral — no Retail Tower/ERPNext/POS specifics.
+- **FR-014**: A queue item's `status` MUST be one of `ready` / `blocked` / `done` (the v0 deriver
+  emits only `ready` / `blocked`; `done` is reserved for future/external marking); its `type` MUST be
+  one of `implementation` / `test` / `docs` / `migration` / `chore`.
+- **FR-015**: The router output MUST use a single stable shape: `next` always present (nullable),
+  `blocked[]`, and `no_safe_task_reasons[]` (empty when `next` is non-null).
+- **FR-016**: `queue.json` and the router decision (`route.json`) MUST be written to the designated
+  out-dir (`.tenantguard/`, same convention as 003/004); writing there is not a modification of the
+  scanned repo's tracked source. `route` also prints the decision to stdout.
 
 ### Key Entities
 
 - **Queue Item**: a safe, scoped unit of work (full contract above).
 - **Queue** (`queue.json`): the derived collection of items.
-- **Router Decision**: the chosen `next` item + the `blocked` list with reasons.
+- **Router Decision** (`route.json`): `next` (the chosen item with `id`, `title`, `reason[]`; `null`
+  when none safe) + `blocked[]` ({id, reason}) + `no_safe_task_reasons[]`.
 - **Lock Scope**: the file set an item reserves while in flight.
 
 ---
@@ -163,8 +192,9 @@ By default the router selects exactly one `next`. Ties are broken deterministica
 ## CLI Surface *(mandatory)*
 
 ```text
-tenantguard queue       derive queue.json from map + findings
+tenantguard queue       derive queue.json from map + findings (→ .tenantguard/queue.json)
 tenantguard route       select one next-safest task (with reason) + list blocked items
+                        (→ .tenantguard/route.json; also printed to stdout)
 ```
 
 ---
@@ -172,9 +202,9 @@ tenantguard route       select one next-safest task (with reason) + list blocked
 ## Required Outputs *(mandatory)*
 
 ```text
-queue.json          derived queue items
-one next safe task  the router's chosen item with reason
-blocked list        items that cannot run, with reasons
+.tenantguard/queue.json   derived queue items (each carrying the full item contract)
+.tenantguard/route.json   the router decision: next (nullable) + blocked[] + no_safe_task_reasons[]
+                          the chosen next item with reason is also printed to stdout
 ```
 
 ---
@@ -227,8 +257,9 @@ blocked list        items that cannot run, with reasons
 
 - **Scoring algorithm and weights deferred** to plan/ADR. This spec mandates the *factors* and
   *behavior* (one task, deterministic, evidence-traced), not a specific formula.
-- **Tiebreak rule** is stated in behavior (deterministic) but its exact ordering (e.g. blast radius
-  then id) is finalized at plan layer.
+- **Selection ordering** is pinned (clarified 2026-06-18): primary sort `score desc`; ties (equal
+  score) broken by `blast_radius asc` → `risk asc` → `id asc`. The scoring *formula/weights* remain
+  deferred to plan; the deterministic ordering does not.
 - **"Blast radius"** is the breadth of files/surfaces an item affects, derived from lock scope and
   evidence; precise measurement is a plan-layer detail.
 - **Single-task default** is intentional; a future flag for N tasks is out of MVP scope.
