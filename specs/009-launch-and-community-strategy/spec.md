@@ -207,13 +207,26 @@ Themes, each tied to a real product capability so claims are demonstrable:
 ```text
 - Unscoped AI agents      — the core pain; why "whole repo to the agent" breaks architecture
 - PR safety               — Ready / Not Ready / Needs Verification with evidence
-- Tenant isolation        — TG-G4: catching missing tenant scoping before it ships
+- Security / tenant boundaries — TG-G4: catching unguarded routes, admin routes without role guards, and secrets in logs before they ship
 - Architecture gates      — TG-G1/G2: boundary and contract drift, with file/line evidence
 - Prompt boundaries       — safe, scoped agent prompts (allowed/forbidden files, stop conditions)
 ```
 
 Each piece MUST be backed by a real CLI behavior or output (a map, a finding, a compiled prompt, a
 review verdict) — content demonstrates the tool, it does not describe vaporware.
+
+**No-vaporware mapping — verified against merged code (SC-002 / FR-005).** Every theme is backed by a
+shipped capability (features 004/006/007 are merged on `main`):
+
+| Theme | Shipped capability (merged) |
+|-------|-----------------------------|
+| Unscoped AI agents | conceptual framing of the core pain (no claim of a feature) |
+| PR safety (Ready / Not Ready / Needs Verification + evidence) | `packages/review/src/verdict.ts` (007) |
+| Security / tenant boundaries (TG-G4: unguarded routes, admin-route role guards, secrets-in-logs) | `packages/gates/src/gates/g4-security.ts` (004) |
+| Architecture gates (TG-G1/G2) | `packages/gates/src/gates/g1-architecture.ts` + `g2-contract.ts` (004) |
+| Prompt boundaries (allowed/forbidden files, stop conditions) | `packages/prompt/src/scope.ts` + `defaults.ts` (006) |
+
+This mapping is the launch's honesty guarantee: the plan markets only what the kernel already ships.
 
 ---
 
@@ -360,8 +373,8 @@ No other artifacts (no website, no scripts, no assets) are produced by this feat
 - **AC-003**: The CLI-MVP-reviewed hard gate on launch is explicit.
 - **AC-004**: Launch channels (GitHub, X, LinkedIn, HN, Product Hunt, Reddit/devtools, Dev.to, Indie
   Hackers, Arabic tech communities) are listed with a norms-respecting usage rule.
-- **AC-005**: Content plan (unscoped agents, PR safety, tenant isolation, architecture gates, prompt
-  boundaries) is present and each theme ties to a real capability.
+- **AC-005**: Content plan (unscoped agents, PR safety, security / tenant boundaries, architecture
+  gates, prompt boundaries) is present and each theme ties to a real, demonstrable capability.
 - **AC-006**: Growth loops (README badge, shareable report, CI footer, stack templates) are present,
   opt-in, and later-wave loops are marked as such.
 - **AC-007**: Success metrics and launch stages (100 / 500 / 1000+) are defined, activation-weighted.
