@@ -4,9 +4,10 @@ import { dirname, resolve } from "node:path";
 import { rmSync, existsSync } from "node:fs";
 import { runScan } from "../src/commands/scan.js";
 import { runMap } from "../src/commands/map.js";
+import { fixture } from "./helpers.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const saas = resolve(here, "../../scanner/tests/fixtures/saas");
+const saas = fixture("saas");
 const out = resolve(here, ".tmp-out-map");
 
 afterEach(() => {

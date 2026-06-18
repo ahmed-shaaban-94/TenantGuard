@@ -4,10 +4,11 @@ import { dirname, resolve } from "node:path";
 import { rmSync, existsSync, readFileSync } from "node:fs";
 import { validate } from "@tenantguard/project-map";
 import { runScan } from "../src/commands/scan.js";
+import { fixture } from "./helpers.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const saas = resolve(here, "../../scanner/tests/fixtures/saas");
-const notgit = resolve(here, "../../scanner/tests/fixtures/notgit");
+const saas = fixture("saas");
+const notgit = fixture("notgit");
 const out = resolve(here, ".tmp-out");
 
 afterEach(() => {
