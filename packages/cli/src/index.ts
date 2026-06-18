@@ -4,12 +4,14 @@ import { runMap } from "./commands/map.js";
 import { runGatesCommand } from "./commands/gates.js";
 import { runQueueCommand } from "./commands/queue.js";
 import { runRouteCommand } from "./commands/route.js";
+import { runPromptCommand } from "./commands/prompt.js";
 
 export { runScan } from "./commands/scan.js";
 export { runMap } from "./commands/map.js";
 export { runGatesCommand } from "./commands/gates.js";
 export { runQueueCommand } from "./commands/queue.js";
 export { runRouteCommand } from "./commands/route.js";
+export { runPromptCommand } from "./commands/prompt.js";
 
 /** Build the `tenantguard` CLI program. Commands set process.exitCode (no hard process.exit). */
 export function buildProgram(): Command {
@@ -73,6 +75,17 @@ export function buildProgram(): Command {
     .option("--format <fmt>", "json | yaml", "json")
     .action((path: string, opts: { out: string; stdout?: boolean; format: "json" | "yaml" }) => {
       process.exitCode = runRouteCommand(path, opts);
+    });
+
+  program
+    .command("prompt")
+    .description("Compile a safe, scoped agent prompt for a queue item")
+    .argument("<id>", "queue item id, e.g. Q-001")
+    .option("--agent <name>", "claude | codex | generic", "generic")
+    .option("--out <dir>", "directory holding queue.json; prompt-<id>.md written here", ".tenantguard")
+    .option("--stdout", "print the prompt only (do not write a file)")
+    .action((id: string, opts: { agent?: string; out: string; stdout?: boolean }) => {
+      process.exitCode = runPromptCommand(id, opts);
     });
 
   return program;

@@ -16,6 +16,9 @@ importers:
       '@tenantguard/project-map':
         specifier: workspace:*
         version: link:../project-map
+      '@tenantguard/prompt':
+        specifier: workspace:*
+        version: link:../prompt
       '@tenantguard/queue':
         specifier: workspace:*
         version: link:../queue
@@ -69,6 +72,25 @@ importers:
       zod:
         specifier: ^3.24.1
         version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.21
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.19.21)
+
+  packages/prompt:
+    dependencies:
+      '@tenantguard/queue':
+        specifier: workspace:*
+        version: link:../queue
+      '@tenantguard/scanner':
+        specifier: workspace:*
+        version: link:../scanner
     devDependencies:
       '@types/node':
         specifier: ^22.10.2

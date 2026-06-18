@@ -15,6 +15,7 @@
   "dependencies": {
     "@tenantguard/gates": "workspace:*",
     "@tenantguard/project-map": "workspace:*",
+    "@tenantguard/prompt": "workspace:*",
     "@tenantguard/queue": "workspace:*",
     "@tenantguard/scanner": "workspace:*",
     "commander": "^12.1.0",
