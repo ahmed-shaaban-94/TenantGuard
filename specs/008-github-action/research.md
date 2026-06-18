@@ -35,6 +35,13 @@ Alternatives**.
   `checkout head → scan → review-pr <number>` (an explicit `gates` step is redundant — review-pr runs
   the gates internally). Grounded in `packages/review/src/git.ts:13-15` (the three HEAD-relative
   commands) and `packages/review/src/gh.ts:16` (the `gh pr view` source).
+- **Linchpin (verified): PR changed-file paths and evidence paths share one format — repo-relative
+  POSIX — so attribution matches.** Evidence paths derive from the scanner's `listFiles`
+  (`packages/scanner/src/io.ts`: `relative(root, …).split(sep).join("/")`), and `gh.ts:36` normalizes
+  `gh`'s `files[].path` (GitHub returns repo-relative POSIX) the same way (`.split("\\").join("/")`).
+  Were the formats to differ (absolute / base-prefixed), PR mode would fail with the **same false-Ready
+  symptom** as the local-diff bug, from a different cause — hence this is recorded as verified, not
+  assumed.
 - **Alternatives considered**:
   - *`review-pr --local-diff` in CI* — empty diff after checkout → false "Ready" every run. **Rejected
     (this was the original draft's bug, caught in implement review).**
