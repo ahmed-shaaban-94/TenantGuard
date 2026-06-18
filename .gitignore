@@ -8,6 +8,9 @@ dist/
 # Test/coverage artifacts
 coverage/
 
+# TenantGuard CLI output (project-map.json / risks.json / queue.json / review.* etc.)
+.tenantguard/
+
 # Editor / OS
 .DS_Store
 *.log
