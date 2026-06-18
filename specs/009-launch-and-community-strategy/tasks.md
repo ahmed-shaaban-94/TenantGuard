@@ -31,7 +31,7 @@ small refinement to `spec.md` flipping it to verified). The implement phase prod
 
 **Purpose**: Confirm the deliverable exists and the feature's hard boundary.
 
-- [ ] T001 Confirm `specs/009-launch-and-community-strategy/spec.md` is present and is the sole binding
+- [X] T001 Confirm `specs/009-launch-and-community-strategy/spec.md` is present and is the sole binding
   deliverable (Required Output); note that no other artifact may be created (SC-006 / FR-009 / AC-010).
 
 ---
@@ -43,7 +43,7 @@ FR-005). This was aspirational when the stub was written; 004/006/007 are now me
 
 **⚠️ CRITICAL**: If any theme does not map to merged code, the spec overclaims and must be corrected.
 
-- [ ] T002 Verify each content theme in `spec.md` § Content Plan maps to merged code, and record the
+- [X] T002 Verify each content theme in `spec.md` § Content Plan maps to merged code, and record the
   mapping in `spec.md` (flip "aspirational" → "verified"): PR safety → `packages/review/src/verdict.ts`
   (007); tenant isolation TG-G4 → `packages/gates/src/gates/g4-security.ts` (004); architecture gates
   TG-G1/G2 → `g1-architecture.ts` + `g2-contract.ts` (004); prompt boundaries → `packages/prompt/src/
@@ -63,13 +63,13 @@ done / in-progress / N/A-with-reason) without asking the author.
 
 ### Verification for User Story 1
 
-- [ ] T003 [US1] Verify `spec.md` § GitHub Repo Readiness Checklist + § Pre-Launch Checklist: every item
+- [X] T003 [US1] Verify `spec.md` § GitHub Repo Readiness Checklist + § Pre-Launch Checklist: every item
   is individually checkable (done / not-done / N/A-with-reason) with a place for evidence (SC-001, FR-002,
   AC-002).
-- [ ] T004 [US1] Verify the **HARD GATE** is explicit: the pre-launch checklist forbids launching before
+- [X] T004 [US1] Verify the **HARD GATE** is explicit: the pre-launch checklist forbids launching before
   the CLI MVP (003–007) is implemented AND reviewed (SC-003, FR-003, AC-003). Confirm it currently
   evaluates to "not ready to launch" (MVP shipped on `main`, but the launch itself is unexecuted).
-- [ ] T005 [US1] Verify the readiness/pre-launch sequencing: no channel is posted to before its
+- [X] T005 [US1] Verify the readiness/pre-launch sequencing: no channel is posted to before its
   prerequisite readiness items pass (User Story 1 acceptance scenario 2).
 
 **Checkpoint**: US1 done — the spec yields an unambiguous, gated launch-readiness status. **This is the MVP**
@@ -86,9 +86,9 @@ documented demo and produce a real CLI output without help.
 
 ### Verification for User Story 2
 
-- [ ] T006 [US2] Verify § Core Marketing Message is single + consistent + aligned with `001` and does NOT
+- [X] T006 [US2] Verify § Core Marketing Message is single + consistent + aligned with `001` and does NOT
   overclaim deferred features (App/dashboard/auto-fix) as available (FR-001, AC-001, Non-Goals).
-- [ ] T007 [US2] Verify the readiness checklist requires a runnable quickstart + a terminal GIF/screenshot
+- [X] T007 [US2] Verify the readiness checklist requires a runnable quickstart + a terminal GIF/screenshot
   of a real run, and that the activation path (map/risks/queue/prompt/report) is named (User Story 2
   acceptance scenarios; SC-004 activation metric).
 
@@ -106,7 +106,7 @@ and PR expectations without a maintainer explaining.
 
 ### Verification for User Story 3
 
-- [ ] T008 [US3] Verify the readiness checklist includes `CONTRIBUTING.md` (setup/workflow/PR
+- [X] T008 [US3] Verify the readiness checklist includes `CONTRIBUTING.md` (setup/workflow/PR
   expectations/CoC pointer) and labeled "good first issues" (User Story 3; durability metric =
   contributors, SC-004).
 
@@ -116,19 +116,19 @@ and PR expectations without a maintainer explaining.
 
 ## Phase 6: Polish & Cross-Cutting (Guardrail Verification)
 
-- [ ] T009 [P] Verify § Non-Goals forbids the prohibited tactics as **non-permitted** anywhere in the
+- [X] T009 [P] Verify § Non-Goals forbids the prohibited tactics as **non-permitted** anywhere in the
   plan: no fake stars, no bought engagement, no paid ads (MVP), no enterprise sales motion, no
   dashboard launch before CLI value (SC-005, FR-008, AC-008).
-- [ ] T010 [P] Verify success metrics weight **activation + real usage** over vanity, and launch stages
+- [X] T010 [P] Verify success metrics weight **activation + real usage** over vanity, and launch stages
   (100 / 500 / 1000+) are defined with usage-based gates (SC-004, FR-007, AC-007).
-- [ ] T011 [P] Verify growth loops are opt-in/honest and any later-wave loop (CI footer ← 008) is marked
+- [X] T011 [P] Verify growth loops are opt-in/honest and any later-wave loop (CI footer ← 008) is marked
   not-launch-day (FR-006, AC-006).
-- [ ] T012 [P] Verify dependencies: depends on `001`, blocks no CLI work, informs later README/demo/
+- [X] T012 [P] Verify dependencies: depends on `001`, blocks no CLI work, informs later README/demo/
   community (SC-007, FR-010, AC-009); and FR-011/AC-011 (no secrets) + FR-012/AC-011 (domain-neutral).
-- [ ] T013 **No-forbidden-artifacts tripwire**: `git status` shows ONLY `specs/009/*` (spec/plan/tasks)
+- [X] T013 **No-forbidden-artifacts tripwire**: `git status` shows ONLY `specs/009/*` (spec/plan/tasks)
   + the `CLAUDE.md` marker + `.specify/feature.json` — NO `packages/*`, no `.github/workflows/*`, no
   `package.json`/lockfile, no ADR, no marketing-site/dashboard/App files (SC-006, FR-009, AC-010).
-- [ ] T014 Final review: every AC (AC-001…AC-011) and SC (SC-001…SC-007) is satisfied by `spec.md`; mark
+- [X] T014 Final review: every AC (AC-001…AC-011) and SC (SC-001…SC-007) is satisfied by `spec.md`; mark
   all tasks `[X]`.
 
 ---

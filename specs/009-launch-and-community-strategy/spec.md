@@ -215,6 +215,19 @@ Themes, each tied to a real product capability so claims are demonstrable:
 Each piece MUST be backed by a real CLI behavior or output (a map, a finding, a compiled prompt, a
 review verdict) — content demonstrates the tool, it does not describe vaporware.
 
+**No-vaporware mapping — verified against merged code (SC-002 / FR-005).** Every theme is backed by a
+shipped capability (features 004/006/007 are merged on `main`):
+
+| Theme | Shipped capability (merged) |
+|-------|-----------------------------|
+| Unscoped AI agents | conceptual framing of the core pain (no claim of a feature) |
+| PR safety (Ready / Not Ready / Needs Verification + evidence) | `packages/review/src/verdict.ts` (007) |
+| Tenant isolation (TG-G4) | `packages/gates/src/gates/g4-security.ts` (004) |
+| Architecture gates (TG-G1/G2) | `packages/gates/src/gates/g1-architecture.ts` + `g2-contract.ts` (004) |
+| Prompt boundaries (allowed/forbidden files, stop conditions) | `packages/prompt/src/scope.ts` + `defaults.ts` (006) |
+
+This mapping is the launch's honesty guarantee: the plan markets only what the kernel already ships.
+
 ---
 
 ## Growth Loops *(mandatory)*
