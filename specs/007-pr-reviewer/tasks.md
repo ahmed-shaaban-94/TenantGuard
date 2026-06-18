@@ -27,10 +27,10 @@ US3 (scope) are additive P2 stories.
 
 **Purpose**: New package scaffolding consistent with the other packages (project-map/scanner/gates/queue/prompt).
 
-- [ ] T001 Create `packages/review/` with `package.json` (name `@tenantguard/review`, type module, deps on `@tenantguard/gates`, `@tenantguard/queue`, `@tenantguard/scanner`, `zod`, `commander` not needed here; devDeps `vitest`, `typescript`) mirroring `packages/prompt/package.json`. **Lockfile change requires explicit approval — flag if pnpm-lock must change.**
-- [ ] T002 [P] Add `packages/review/tsconfig.json` (extends root config; `exclude: ["tests/fixtures"]` per the 004 lesson) mirroring `packages/prompt/tsconfig.json`.
-- [ ] T003 [P] Add `packages/review/vitest.config.ts` (globals, node env) mirroring the other packages.
-- [ ] T004 Write **ADR-006** (`docs/decisions/ADR-006-diff-source.md`): diff source = read-only `git diff --name-only` (+ `gh` for PR mode); no diff-parsing dependency; no bundled GitHub client. Mirrors ADR-002/003/004/005. (Research R1/R5.)
+- [X] T001 Create `packages/review/` with `package.json` (name `@tenantguard/review`, type module, deps on `@tenantguard/gates`, `@tenantguard/queue`, `@tenantguard/scanner`, `zod`, `commander` not needed here; devDeps `vitest`, `typescript`) mirroring `packages/prompt/package.json`. **Lockfile change approved (additive importer block only).**
+- [X] T002 [P] Add `packages/review/tsconfig.json` (extends root config; `exclude: ["tests/fixtures"]` per the 004 lesson) mirroring `packages/prompt/tsconfig.json`.
+- [X] T003 [P] Add `packages/review/vitest.config.ts` (globals, node env) mirroring the other packages.
+- [X] T004 Write **ADR-006** (`docs/decisions/ADR-006-diff-source.md`): diff source = read-only `git diff --name-only` (+ `gh` for PR mode); no diff-parsing dependency; no bundled GitHub client. Mirrors ADR-002/003/004/005. (Research R1/R5.)
 
 ---
 
@@ -40,12 +40,12 @@ US3 (scope) are additive P2 stories.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T005 [P] Define types in `packages/review/src/types.ts`: `ReviewMode`, `Verdict`, `ReviewFinding` (gate finding | scope violation), `ScopeViolation`, `ScopeResult`, `ReviewReport`, `ReviewOptions`. Reuse `Evidence` from `@tenantguard/project-map` and `Finding`/`Severity`/`FindingStatus` from `@tenantguard/gates` VERBATIM — never redefine. (data-model Entities.)
-- [ ] T006 [P] Define the Zod schema + `validateReview` + `REVIEW_SCHEMA_VERSION` in `packages/review/src/schema.ts` per contracts/review-json.md (verdict enum, findings union, scope, mode, changed_files). Reuse the 002/004 evidence/finding field shapes.
-- [ ] T007 [US-shared] Write FAILING test `packages/review/tests/git-source.test.ts`: `changedFiles(repoRoot)` returns repo-relative POSIX paths from `git diff --name-only` (working + staged + untracked), de-duplicated and code-unit sorted (uses copy-to-tempdir + `git init` fixture).
-- [ ] T008 [US-shared] Implement the read-only git runner `packages/review/src/git.ts`: `changedFiles(repoRoot, base?)` shelling out to `git diff --name-only` (read-only); normalize/dedupe/sort by code-unit comparison. Make T007 pass (GREEN). (Research R1, R7.)
-- [ ] T009 [US-shared] Write FAILING test `packages/review/tests/attribution.test.ts`: a finding whose `evidence.path` ∈ changed files is kept; a finding touching only UNCHANGED files is dropped. (data-model R2.)
-- [ ] T010 [US-shared] Implement `packages/review/src/attribute.ts`: `attributable(finding, changedFiles)` + filter helper; drop `not_applicable`; keep diff-attributable `risk`/`needs_verification`. Make T009 pass.
+- [X] T005 [P] Define types in `packages/review/src/types.ts`: `ReviewMode`, `Verdict`, `ReviewFinding` (gate finding | scope violation), `ScopeViolation`, `ScopeResult`, `ReviewReport`, `ReviewOptions`. Reuse `Evidence` from `@tenantguard/project-map` and `Finding`/`Severity`/`FindingStatus` from `@tenantguard/gates` VERBATIM — never redefine. (data-model Entities.)
+- [X] T006 [P] Define the Zod schema + `validateReview` + `REVIEW_SCHEMA_VERSION` in `packages/review/src/schema.ts` per contracts/review-json.md (verdict enum, findings union, scope, mode, changed_files). Reuse the 002/004 evidence/finding field shapes.
+- [X] T007 [US-shared] Write FAILING test `packages/review/tests/git-source.test.ts`: `changedFiles(repoRoot)` returns repo-relative POSIX paths from `git diff --name-only` (working + staged + untracked), de-duplicated and code-unit sorted (uses copy-to-tempdir + `git init` fixture).
+- [X] T008 [US-shared] Implement the read-only git runner `packages/review/src/git.ts`: `changedFiles(repoRoot, base?)` shelling out to `git diff --name-only` (read-only); normalize/dedupe/sort by code-unit comparison. Make T007 pass (GREEN). (Research R1, R7.)
+- [X] T009 [US-shared] Write FAILING test `packages/review/tests/attribution.test.ts`: a finding whose `evidence.path` ∈ changed files is kept; a finding touching only UNCHANGED files is dropped. (data-model R2.)
+- [X] T010 [US-shared] Implement `packages/review/src/attribute.ts`: `attributable(finding, changedFiles)` + filter helper; drop `not_applicable`; keep diff-attributable `risk`/`needs_verification`. Make T009 pass.
 
 **Checkpoint**: Foundation ready — changed-files + attribution proven; user stories can begin.
 
@@ -61,22 +61,22 @@ file → verdict Not Ready, naming the violated gate and citing evidence; runs w
 
 ### Tests for User Story 1 (write first, confirm RED) ⚠️
 
-- [ ] T011 [P] [US1] FAILING `packages/review/tests/verdict-exhaustive.test.ts`: every run yields exactly one of `ready`/`not_ready`/`needs_verification` with evidence (SC-001).
-- [ ] T012 [P] [US1] FAILING `packages/review/tests/risk-blocks.test.ts`: a diff-attributable `risk` finding → `not_ready` naming the gate (SC-002).
-- [ ] T013 [P] [US1] FAILING `packages/review/tests/needs-verification.test.ts`: a diff-attributable `needs_verification` (and no risk) → `needs_verification`, never a false pass (SC-004, FR-007).
-- [ ] T014 [P] [US1] FAILING `packages/review/tests/read-only.test.ts`: repo/diff byte-unchanged after a review (SC-006, FR-008).
-- [ ] T015 [P] [US1] FAILING `packages/review/tests/no-secrets.test.ts`: secret-like evidence is surfaced by `signal` name only, never the raw value (FR-009, SC-007).
-- [ ] T016 [P] [US1] FAILING `packages/review/tests/determinism.test.ts`: same input → byte-identical `review.json` + `review.md` (FR-010, SC-007).
-- [ ] T017 [P] [US1] FAILING `packages/cli/tests/cli.review.test.ts` (local-diff cases): `runReviewCommand` exit 0 on success; exit 1 when no `project-map.json` (run scan first); exit 2 on not-a-Git-repo / both-or-neither of `--local-diff`/`<number>`.
+- [X] T011 [P] [US1] FAILING `packages/review/tests/verdict-exhaustive.test.ts`: every run yields exactly one of `ready`/`not_ready`/`needs_verification` with evidence (SC-001).
+- [X] T012 [P] [US1] FAILING `packages/review/tests/risk-blocks.test.ts`: a diff-attributable `risk` finding → `not_ready` naming the gate (SC-002).
+- [X] T013 [P] [US1] FAILING `packages/review/tests/needs-verification.test.ts`: a diff-attributable `needs_verification` (and no risk) → `needs_verification`, never a false pass (SC-004, FR-007).
+- [X] T014 [P] [US1] FAILING `packages/review/tests/read-only.test.ts`: repo/diff byte-unchanged after a review (SC-006, FR-008).
+- [X] T015 [P] [US1] FAILING `packages/review/tests/no-secrets.test.ts`: secret-like evidence is surfaced by `signal` name only, never the raw value (FR-009, SC-007).
+- [X] T016 [P] [US1] FAILING `packages/review/tests/determinism.test.ts`: same input → byte-identical `review.json` + `review.md` (FR-010, SC-007).
+- [X] T017 [P] [US1] FAILING `packages/cli/tests/cli.review.test.ts` (local-diff cases): `runReviewCommand` exit 0 on success; exit 1 when no `project-map.json` (run scan first); exit 2 on not-a-Git-repo / both-or-neither of `--local-diff`/`<number>`.
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Implement the verdict engine `packages/review/src/verdict.ts`: `decideVerdict(attributableFindings, scopeResult)` — risk OR scope-violation → `not_ready`; else needs_verification → `needs_verification`; else `ready` (data-model R3, FR-012). Handles `scope.checked=false` so US1 works without US3. Makes T011–T013 pass.
-- [ ] T019 [US1] Implement `packages/review/src/io.ts`: write `review.json` (validated via `validateReview`) + `review.md` to the out-dir using the scanner's read-only `writeOutput`; expose `loadQueueItem(out, id)` stub returning the item (full scope logic lands in US3). Reuse `@tenantguard/scanner` io.
-- [ ] T020 [US1] Implement the Markdown renderer `packages/review/src/render.ts`: fixed-order sections (verdict, contributing findings w/ gate id + evidence, scope note, changed files); no secret values. Makes T015/T016 (md half) pass.
-- [ ] T021 [US1] Implement the orchestrator `packages/review/src/review.ts` `reviewLocalDiff(opts)`: `git.changedFiles` → `gates.runGates` (full set, verbatim) → `attribute` → scope (skipped when no item) → `verdict` → assemble `ReviewReport`. Read-only throughout. Makes T014/T016 pass.
-- [ ] T022 [US1] Implement `packages/review/src/index.ts` public surface: `reviewLocalDiff`, `reviewPr` (stub for US2), error classes `MissingProjectMapError`/`NotGitRepoError`/`InvalidReviewError`. Make T011–T016 pass (GREEN).
-- [ ] T023 [US1] Implement `packages/cli/src/commands/review.ts` `runReviewCommand(arg, opts): number` mirroring `gates.ts` (sink/errSink, `--out`/`--stdout`/`--format`, exit codes 0/1/2/3, error-class→code mapping). Wire `--local-diff`. Register in `packages/cli/src/index.ts` as `review-pr`. Make T017 (local-diff) pass.
+- [X] T018 [US1] Implement the verdict engine `packages/review/src/verdict.ts`: `decideVerdict(attributableFindings, scopeResult)` — risk OR scope-violation → `not_ready`; else needs_verification → `needs_verification`; else `ready` (data-model R3, FR-012). Handles `scope.checked=false` so US1 works without US3. Makes T011–T013 pass.
+- [X] T019 [US1] Implement `packages/review/src/io.ts`: write `review.json` (validated via `validateReview`) + `review.md` to the out-dir using the scanner's read-only `writeOutput`; expose `loadQueueItem(out, id)`. Reuse `@tenantguard/scanner` io.
+- [X] T020 [US1] Implement the Markdown renderer `packages/review/src/render.ts`: fixed-order sections (verdict, contributing findings w/ gate id + evidence, scope note, changed files); no secret values. Makes T015/T016 (md half) pass.
+- [X] T021 [US1] Implement the orchestrator `packages/review/src/review.ts` `reviewLocalDiff(opts, deps)`: `git.changedFiles` → `gates.runGates` (full set, verbatim) → `attribute` → scope (skipped when no item) → `verdict` → assemble `ReviewReport`. Read-only throughout; `deps` seam (default-real) per R8. Makes T014/T016 pass.
+- [X] T022 [US1] Implement `packages/review/src/index.ts` public surface: `reviewLocalDiff`, error classes `MissingQueueError`/`UnknownItemError`/`InvalidReviewError`/`GitUnavailableError`. (PR exports added in US2.) Make T011–T016 pass (GREEN).
+- [X] T023 [US1] Implement `packages/cli/src/commands/review.ts` `runReviewCommand(arg, opts): number` mirroring `gates.ts` (sink/errSink, `--out`/`--stdout`/`--format`, exit codes 0/1/2/3, error-class→code mapping). Wire `--local-diff`. Register in `packages/cli/src/index.ts` as `review-pr`. Make T017 (local-diff) pass.
 
 **Checkpoint**: US1 fully functional — local-diff review produces a verdict with evidence, read-only,
 no credentials. **This is the MVP increment** (completes the constitution's `review-pr --local-diff`).
@@ -93,15 +93,15 @@ flags the out-of-scope change; a no-`--item` run notes scope was not checked.
 
 ### Tests for User Story 3 (write first, confirm RED) ⚠️
 
-- [ ] T024 [P] [US3] FAILING `packages/review/tests/scope-item.test.ts`: a changed file in `forbidden_files`, or outside a non-empty `allowed_files`, is flagged; verdict `not_ready` (SC-003). `allowed_files: []` ⇒ only forbidden applies.
-- [ ] T025 [P] [US3] FAILING `packages/review/tests/scope-skipped.test.ts`: no `--item` ⇒ `scope.checked=false`, `violations=[]`, no `item_id`, and gate review + verdict still run (FR-003).
-- [ ] T026 [P] [US3] FAILING `packages/cli/tests/cli.review.test.ts` (scope cases): `--item` with no `queue.json` → exit 1 (run queue first); unknown `--item` id → exit 2.
+- [X] T024 [P] [US3] FAILING `packages/review/tests/scope-item.test.ts`: a changed file in `forbidden_files`, or outside a non-empty `allowed_files`, is flagged; verdict `not_ready` (SC-003). `allowed_files: []` ⇒ only forbidden applies.
+- [X] T025 [P] [US3] FAILING `packages/review/tests/scope-skipped.test.ts`: no `--item` ⇒ `scope.checked=false`, `violations=[]`, no `item_id`, and gate review + verdict still run (FR-003).
+- [X] T026 [P] [US3] FAILING `packages/cli/tests/cli.review.test.ts` (scope cases): `--item` with no `queue.json` → exit 1 (run queue first); unknown `--item` id → exit 2; in-scope diff → ready + no out-dir pollution.
 
 ### Implementation for User Story 3
 
-- [ ] T027 [US3] Implement `packages/review/src/scope.ts`: `checkScope(changedFiles, item)` → `ScopeResult` per data-model `out_of_scope` rule (forbidden OR outside-non-empty-allowed); `allowed_files: []` = no allow constraint. Makes T024 pass.
-- [ ] T028 [US3] Wire `--item` through `review.ts`/`io.ts`: load `QueueItem` from `queue.json` (via `@tenantguard/queue` type + scanner read), call `checkScope`; absent item ⇒ `{checked:false}`. `MissingQueueError`/`UnknownItemError`. Makes T025 pass.
-- [ ] T029 [US3] Add `--item <ID>` to `packages/cli/src/commands/review.ts`; map `MissingQueueError`→exit 1, `UnknownItemError`→exit 2. Make T026 pass (GREEN).
+- [X] T027 [US3] Implement `packages/review/src/scope.ts`: `checkScope(changedFiles, item)` → `ScopeResult` per data-model `out_of_scope` rule (forbidden OR outside-non-empty-allowed); `allowed_files: []` = no allow constraint. Makes T024 pass.
+- [X] T028 [US3] Wire `--item` through `review.ts`/`io.ts`: load `QueueItem` from `queue.json` (via `@tenantguard/queue` type + scanner read), call `checkScope`; absent item ⇒ `{checked:false}`. `MissingQueueError`/`UnknownItemError`. Makes T025 pass. **Also fixed an SC-007 self-reference bug: the reviewer's out-dir is now excluded from changed files (`excludeOutDir`) + regression test `out-dir-excluded.test.ts`.**
+- [X] T029 [US3] Add `--item <ID>` to `packages/cli/src/commands/review.ts`; map `MissingQueueError`→exit 1, `UnknownItemError`→exit 2. Make T026 pass (GREEN).
 
 **Checkpoint**: US1 + US3 work — local-diff review with optional declared-scope enforcement.
 
@@ -117,15 +117,15 @@ review still works; with a stubbed PR changed-files source, a migration-safety r
 
 ### Tests for User Story 2 (write first, confirm RED) ⚠️
 
-- [ ] T030 [P] [US2] FAILING `packages/review/tests/pr-degrade.test.ts`: `gh` unavailable ⇒ `GitHubUnavailableError` with a clear message; local-diff path unaffected (FR-006).
-- [ ] T031 [P] [US2] FAILING `packages/review/tests/pr-review.test.ts`: given a stubbed PR changed-files set, the same attribute→verdict core produces the verdict from PR-changed files (FR-005).
-- [ ] T032 [P] [US2] FAILING `packages/cli/tests/cli.review.test.ts` (PR cases): `<number>` mode exit 0 on success; `gh`-unavailable → exit 2 (gap reported, local-diff still available).
+- [X] T030 [P] [US2] FAILING `packages/review/tests/pr-degrade.test.ts`: `gh` unavailable ⇒ `GitHubUnavailableError` with a clear message; local-diff path unaffected (FR-006).
+- [X] T031 [P] [US2] FAILING `packages/review/tests/pr-review.test.ts`: given a stubbed PR changed-files set, the same attribute→verdict core produces the verdict from PR-changed files (FR-005).
+- [X] T032 [P] [US2] FAILING `packages/cli/tests/cli.review.test.ts` (PR cases): `gh`-unavailable → exit 2 (gap reported, local-diff still available).
 
 ### Implementation for User Story 2
 
-- [ ] T033 [US2] Implement the read-only gh runner `packages/review/src/gh.ts`: `prChangedFiles(number)` + optional `prMetadata(number)` via `gh` (read-only); `GitHubUnavailableError` when `gh`/access is missing. (Research R5, R7.) Make T030 pass.
-- [ ] T034 [US2] Implement `reviewPr(number, opts)` in `packages/review/src/review.ts` reusing the US1 attribute→scope→verdict core over the PR changed-files set; set `mode:"pr"`, `github_available`. Make T031 pass.
-- [ ] T035 [US2] Wire `<number>` mode + `gh`-unavailable→exit 2 in `packages/cli/src/commands/review.ts`. Make T032 pass (GREEN).
+- [X] T033 [US2] Implement the read-only gh runner `packages/review/src/gh.ts`: `prChangedFiles(number)` + optional `prMetadata(number)` via `gh pr view --json` (read-only); `GitHubUnavailableError` when `gh`/access is missing. (Research R5, R7.) Make T030 pass.
+- [X] T034 [US2] Implement `reviewPr(number, opts, deps)` in `packages/review/src/pr.ts` reusing the US1 attribute→scope→verdict core (`assemble`) over the PR changed-files set; set `mode:"pr"`, `github_available:true`. Make T031 pass.
+- [X] T035 [US2] Wire `<number>` mode + `gh`-unavailable→exit 2 in `packages/cli/src/commands/review.ts` (injectable `prDeps` seam). Make T032 pass (GREEN).
 
 **Checkpoint**: All three stories functional and independently testable.
 
@@ -133,10 +133,10 @@ review still works; with a stubbed PR changed-files source, a migration-safety r
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T036 [P] Run `quickstart.md` end-to-end on a sample repo (scan → gates → queue → review-pr --local-diff --item) and confirm the documented output matches.
-- [ ] T037 [P] Verify renderer determinism across runs and that no `not_applicable` finding ever appears in `findings[]` (contracts/review-json.md invariants).
-- [ ] T038 Run full verification: `pnpm -r test` (all packages green, incl. the new review + cli.review suites) and `pnpm -r typecheck` (7 packages).
-- [ ] T039 [P] Confirm read-only guarantee end-to-end: `git status` on a fixture repo is unchanged after a review run (SC-006) and no secret value appears in any produced `review.json`/`review.md` (SC-007).
+- [X] T036 [P] e2e chain (scan → gates → reviewLocalDiff) on a real fixture repo via `e2e-chain.test.ts`: an unguarded admin route in the diff → Not Ready, TG-G4 attributed, no out-dir pollution. (Real default-real path, no injection.)
+- [X] T037 [P] Renderer determinism (`determinism.test.ts`) + `not_applicable` excluded from `findings[]` (schema `gateFindingSchema` only admits risk/needs_verification; `diffAttributableFindings` drops not_applicable — `attribution.test.ts`).
+- [X] T038 Full verification: `pnpm -r test` → 8 packages green (165 tests; +45 from 007) and `pnpm -r typecheck` → 7 packages clean.
+- [X] T039 [P] Read-only verified (`read-only.test.ts` snapshots a real fixture repo before/after with the real git source; e2e leaves the repo intact) and no secrets echoed (`no-secrets.test.ts`: raw value absent from md + json; signal name present).
 
 ---
 
