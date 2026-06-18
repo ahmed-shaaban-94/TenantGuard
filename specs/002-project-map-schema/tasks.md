@@ -32,7 +32,7 @@ independently testable.
 dependency/lockfile state and is therefore an **explicit-approval gate** (Constitution: lockfiles
 MUST NOT change unless package changes are explicitly approved).
 
-- [ ] T001 Author `docs/decisions/ADR-001-tech-stack.md` capturing TypeScript / Node LTS / pnpm / Vitest / Zod / JSON+YAML, citing `docs/tenantguard_project_blueprint.md` (tech-stack table, "Why TypeScript first") and `specs/002-project-map-schema/spec.md` Assumptions as the decision basis. (Docs-only; unblocks the Implementation Boundary.)
+- [x] T001 Author `docs/decisions/ADR-001-tech-stack.md` capturing TypeScript / Node LTS / pnpm / Vitest / Zod / JSON+YAML, citing `docs/tenantguard_project_blueprint.md` (tech-stack table, "Why TypeScript first") and `specs/002-project-map-schema/spec.md` Assumptions as the decision basis. (Docs-only; unblocks the Implementation Boundary.) ✅ Done 2026-06-18 — `docs/decisions/ADR-001-tech-stack.md`.
 - [ ] T002 Initialize the `packages/project-map/` package (`package.json` with Zod + a YAML parser, `tsconfig.json`) per ADR-001. **Requires explicit approval (adds dependencies + lockfile).**
 - [ ] T003 [P] Configure Vitest + lint/format for `packages/project-map/` (`vitest.config.ts`, lint config). **Requires explicit approval if it touches the lockfile.**
 
