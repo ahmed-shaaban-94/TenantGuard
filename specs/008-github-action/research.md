@@ -19,17 +19,26 @@ Alternatives**.
   - *A new `@tenantguard/action` package that re-implements the chain* — violates FR-002 ("no separate
     engine") and adds a maintenance surface for zero new behavior. Rejected.
 
-## R2 — PR-head checkout is load-bearing (the example workflow MUST check it out)
+## R2 — CI uses PR-NUMBER mode (not `--local-diff`); PR-head checkout supplies the file contents
 
-- **Decision**: The example workflow **checks out the PR head** before `scan`/`review-pr`. The
-  changed-files SET for PR mode comes from GitHub via `gh`, but **007's gates inspect the local working
-  tree** — so the PR branch must be present locally for findings to attribute to the changed files.
-- **Rationale**: This is exactly 007's documented v0 caveat (`contracts/review-cli.md`, `spec.md`
-  FR-005). Omitting the checkout would make CI review the base, not the PR, and emit a **false "Ready"**
-  — silently defeating the whole feature. The minimal correct chain is `checkout → scan → review-pr`
-  (an explicit `gates` step is redundant — `review-pr` runs the gates internally).
+- **Decision**: The example workflow uses **`review-pr <number>`** (PR-number mode), NOT
+  `review-pr --local-diff`, and **checks out the PR head** before `scan`/`review-pr`. The changed-files
+  **SET** comes from GitHub via `gh pr view --json files` (relative to the PR base); the file
+  **CONTENTS** the gates inspect come from the checked-out working tree.
+- **Rationale**: 007's `changedFiles` (local-diff) runs `git diff --name-only HEAD` (+ `--cached`,
+  + untracked) — all relative to **HEAD**. After `actions/checkout@v4` with `ref: head.sha`, the working
+  tree **is** HEAD: clean, nothing staged, nothing untracked → **all three commands return empty** →
+  `changed_files = []` → every finding is filtered out → verdict `ready`, **on every PR**. So
+  `--local-diff` is structurally wrong for CI (it's for a developer's *uncommitted* local changes). PR
+  mode (`gh.ts` `prChangedFiles`) sources base-relative changed files, which DO attribute. The checkout
+  is still required because the gates read file contents from the tree. Minimal chain:
+  `checkout head → scan → review-pr <number>` (an explicit `gates` step is redundant — review-pr runs
+  the gates internally). Grounded in `packages/review/src/git.ts:13-15` (the three HEAD-relative
+  commands) and `packages/review/src/gh.ts:16` (the `gh pr view` source).
 - **Alternatives considered**:
-  - *`scan → review-pr` with no checkout* — reviews the wrong code; false Ready. Rejected.
+  - *`review-pr --local-diff` in CI* — empty diff after checkout → false "Ready" every run. **Rejected
+    (this was the original draft's bug, caught in implement review).**
+  - *`scan → review-pr` with no checkout* — gates can't read the PR's file contents. Rejected.
   - *`checkout → scan → gates → review-pr`* — double-runs the gates (review-pr already calls them).
     Rejected as redundant (matches the spec's old prose, not what 007 needs).
 

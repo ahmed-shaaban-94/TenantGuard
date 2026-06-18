@@ -15,10 +15,12 @@ the CI runtime/packaging. Adopting the workflow is the consumer's separately-gat
 **Technical approach** (decided at this plan layer; see research.md):
 
 1. **Pure CI wiring over 007's outputs** — the Action runs **checkout PR head → `tenantguard scan` →
-   `tenantguard review-pr`** and renders `review.md` (human summary) into the CI run, reading
+   `tenantguard review-pr <number>`** and renders `review.md` (human summary) into the CI run, reading
    `review.json` for the machine verdict. No new package, no TS, no TDD suite (FR-002). See Research R1.
-2. **PR-head checkout is load-bearing** — 007's gates inspect the local working tree, so the example
-   workflow MUST check out the PR head; otherwise CI reviews the base and emits a false "Ready". See R2.
+2. **PR-NUMBER mode in CI, not `--local-diff`** — `--local-diff` compares the working tree to HEAD,
+   which after a CI checkout is empty (false "Ready" every run). PR mode sources changed files from
+   `gh pr view` (base-relative). The PR-head checkout is still load-bearing — the gates read file
+   **contents** from the working tree. See R2.
 3. **Critical-gate-blocking reads `severity:"critical"`** from `review.json` (plus 004's TG-G9 critical
    aggregator) — NOT the verdict (any risk → `not_ready`) and NOT the exit code (Not-Ready exits 0).
    Documented as a small `jq` step over `review.json`. Satisfies SC-002 ∧ SC-003. See R3.
