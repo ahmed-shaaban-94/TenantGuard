@@ -25,6 +25,18 @@ This spec defines the **required prompt structure**, **default git rules and sto
 
 ---
 
+## Clarifications
+
+### Session 2026-06-18
+
+- Q: What is the prompt output shape/format? → A: Plain **Markdown** (copy-paste-ready) printed to stdout; when not `--stdout`, also written to `.tenantguard/prompt-<ID>.md`. The safety contract is the section structure, not a JSON envelope.
+- Q: How does the compiler obtain the item for `tenantguard prompt <ID>`? → A: It reads `queue.json` (005) from the out-dir and looks up the item by `id`. Missing `queue.json` → "run `tenantguard queue` first"; unknown `<ID>` → clear error.
+- Q: When an item lacks required scope info (FR-009), refuse or mark the gap? → A: **Refuse** with a non-zero exit and a message naming the missing scope fields — never emit a partial/unsafe prompt.
+- Q: What differs between the claude / codex / generic renderers? → A: Only **presentation** (heading style / agent-appropriate framing preamble). The section set, git rules, stop conditions, allowed/forbidden files, and final-report are identical in meaning across all renderers (SC-005). Unknown agent → generic + a note (FR-010).
+- Q: Is compilation deterministic? → A: Yes — for the same (item, agent) input the output is byte-stable (fixed section order; no clock/randomness), so prompts are diffable and testable.
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 "User" is a developer compiling a prompt to hand to an AI coding agent.
@@ -72,8 +84,8 @@ the full required-section set and the same git rules/stop conditions.
 
 ### Edge Cases
 
-- **Item missing required scope info**: compilation refuses or marks the gap rather than emitting an
-  unsafe (unscoped) prompt.
+- **Item missing required scope info**: compilation **refuses** (non-zero exit, missing fields named)
+  rather than emitting an unsafe (unscoped) prompt.
 - **Secret-like content in context**: excluded from the prompt and flagged, never rendered.
 - **Unknown agent name**: falls back to the generic renderer (with a note) rather than failing hard.
 - **Very large context**: the prompt stays scoped to the item; it does not dump the whole repo.
@@ -137,17 +149,32 @@ Final report format
   safety guarantees across renderers.
 - **FR-007**: The prompt MUST NOT contain secrets; secret-like context MUST be excluded and flagged.
 - **FR-008**: The prompt MUST NOT instruct the agent to commit, push, merge, or auto-execute.
-- **FR-009**: If an item lacks required scope info, the compiler MUST refuse or mark the gap rather than
-  emit an unsafe prompt.
+- **FR-009**: If an item lacks required scope info — a non-empty `title` (→ Objective), non-empty
+  `allowed_files`, and non-empty `validation` (`forbidden_files` may be empty) — the compiler MUST
+  **refuse** with a non-zero exit and a message naming the missing fields — it MUST NOT emit a
+  partial/unsafe prompt.
 - **FR-010**: An unknown agent name MUST fall back to the generic renderer with a note, not fail hard.
 - **FR-011**: Compilation MUST run with no network access and no credentials (local-first).
 - **FR-012**: The compiler MUST be domain-neutral — no Retail Tower/ERPNext/POS specifics.
+- **FR-013**: The compiler MUST read the routed queue item by `id` from `queue.json` (005) in the
+  designated out-dir; a missing `queue.json` MUST signal "run `tenantguard queue` first" and an unknown
+  `<ID>` MUST error clearly (no prompt emitted).
+- **FR-014**: The prompt MUST be emitted as **Markdown** (copy-paste-ready) to stdout; when not
+  `--stdout`, it MUST also be written to `.tenantguard/prompt-<ID>.md` (outside the scanned repo's
+  tracked source).
+- **FR-015**: Per-renderer differences MUST be limited to **presentation** (heading style / framing);
+  the section set, git rules, stop conditions, allowed/forbidden files, and final-report MUST be
+  identical in meaning across claude/codex/generic (SC-005).
+- **FR-016**: Compilation MUST be deterministic for the same `(item, agent)` input (fixed section
+  order; no clock/randomness) — output is byte-stable and diffable.
 
 ### Key Entities
 
-- **Prompt**: the compiled, scope-limited instruction set for an agent.
-- **Renderer**: an agent-specific formatter (claude/codex/generic) over the same safety contract.
-- **Queue Item** (from 005): the input the prompt is compiled from.
+- **Prompt**: the compiled, scope-limited Markdown instruction set for an agent (printed; optionally
+  written to `.tenantguard/prompt-<ID>.md`).
+- **Renderer**: an agent-specific formatter (claude/codex/generic) that varies **presentation only**
+  over the same safety contract; unknown agent → generic + note.
+- **Queue Item** (from 005): the input the prompt is compiled from, looked up by `id` in `queue.json`.
 
 ---
 
@@ -157,14 +184,19 @@ Final report format
 tenantguard prompt <ID> --agent claude     compile a safe prompt for queue item <ID> for Claude
 tenantguard prompt <ID> --agent codex      compile a safe prompt for Codex
 tenantguard prompt <ID>                    compile a safe prompt for a generic agent
+tenantguard prompt <ID> --stdout           print the prompt only (no file written)
 ```
+
+The item `<ID>` is looked up in `<out>/queue.json` (default `.tenantguard/`). The compiled Markdown is
+printed to stdout and, unless `--stdout`, also written to `.tenantguard/prompt-<ID>.md`.
 
 ---
 
 ## Required Outputs *(mandatory)*
 
 ```text
-safe agent prompt   copy-paste-ready, scope-limited, all required sections present
+safe agent prompt   copy-paste-ready Markdown, scope-limited, all required sections present.
+                    Printed to stdout; also written to .tenantguard/prompt-<ID>.md unless --stdout.
 ```
 
 ---
@@ -192,8 +224,10 @@ safe agent prompt   copy-paste-ready, scope-limited, all required sections prese
 - **SC-003**: 100% of compiled prompts include the default git rules and stop conditions.
 - **SC-004**: 0 compiled prompts contain secrets or instruct commit/push/merge.
 - **SC-005**: The same item compiled for claude, codex, and generic carries identical safety guarantees.
-- **SC-006**: An item missing scope info yields a refusal/marked-gap, never an unscoped prompt.
+- **SC-006**: An item missing scope info yields a refusal (non-zero exit, missing fields named), never
+  an unscoped prompt.
 - **SC-007**: Compilation runs with no network access and no credentials.
+- **SC-008**: The same `(item, agent)` compiled twice produces byte-identical output (deterministic).
 
 ---
 
@@ -220,5 +254,8 @@ safe agent prompt   copy-paste-ready, scope-limited, all required sections prese
   plan-layer convenience, not a safety requirement.
 - **Final-report fields** match the constitution's required final report and the queue item's
   `final_report.required[]`.
-- **"Scope info"** an item must have to be compilable = at least objective, allowed/forbidden files,
-  and validation; items lacking these are not safely compilable.
+- **"Scope info"** an item must have to be compilable, mapped to the **real 005 `QueueItem`**: a
+  non-empty `title` (→ the prompt's Objective), a non-empty `allowed_files`, and a non-empty
+  `validation`. `forbidden_files` is **present-may-be-empty** (an empty list legitimately means
+  "nothing forbidden beyond the default git rules" — the 005 deriver emits `[]`), so it is NOT part of
+  the non-empty scope check. Items missing `title`/`allowed_files`/`validation` are not safely compilable.
