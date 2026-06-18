@@ -1,0 +1,220 @@
+# Feature Specification: Agent Prompt Compiler
+
+**Feature Branch**: `006-agent-prompt-compiler`
+**Created**: 2026-06-18
+**Status**: Draft
+**Input**: User description: "Generate safe prompts for Claude, Codex, and generic coding agents. Depends on 001, 002, 003, 004, 005. Docs only; no production code."
+
+**Depends on**: `001-product-foundation`, `005-derived-queue-router` (compiles a queue item into a prompt)
+**Blocks**: — (terminal of the produce→route→prompt chain for MVP)
+
+---
+
+## Purpose *(mandatory)*
+
+The Prompt Compiler turns a routed queue item into a **safe, narrow, copy-paste-ready** prompt for an
+AI coding agent (Claude, Codex, or a generic agent). Safe-by-default prompts are TenantGuard's core
+mechanism for preventing agents from changing too many files.
+
+This spec defines the **required prompt structure**, **default git rules and stop conditions**, and the
+**per-agent rendering** requirement — not the templating engine or language.
+
+---
+
+## User Scenarios & Testing *(mandatory)*
+
+"User" is a developer compiling a prompt to hand to an AI coding agent.
+
+### User Story 1 - Compile a safe, scoped prompt (Priority: P1)
+
+A developer compiles a prompt for a routed queue item; the prompt is narrow, names allowed/forbidden
+files, and includes all required safety sections.
+
+**Why this priority**: This is the feature's whole point — converting a scoped task into controlled
+agent execution.
+
+**Independent Test**: Compile a prompt for a queue item and confirm it contains every required section
+and names the item's allowed/forbidden files explicitly.
+
+**Acceptance Scenarios**:
+
+1. **Given** a routed queue item, **When** a prompt is compiled, **Then** it includes objective,
+   repo-state verification, context, scope, allowed files, forbidden files, validation commands, git
+   rules, stop conditions, and final-report format.
+2. **Given** a compiled prompt, **When** inspected, **Then** it names the item's allowed and forbidden
+   files explicitly (not vaguely).
+3. **Given** a compiled prompt, **When** inspected, **Then** it contains no secrets and never instructs
+   the agent to commit, push, or merge.
+
+### User Story 2 - Render for a chosen agent (Priority: P2)
+
+A developer picks the agent (`--agent claude` or `--agent codex`, or generic) and gets a prompt
+rendered appropriately for that agent, with identical safety guarantees.
+
+**Why this priority**: Different agents have different prompt conventions; the safety contract must
+hold regardless of renderer.
+
+**Independent Test**: Compile the same item for claude, codex, and generic and confirm all three carry
+the full required-section set and the same git rules/stop conditions.
+
+**Acceptance Scenarios**:
+
+1. **Given** an item, **When** compiled with `--agent claude` vs `--agent codex` vs generic, **Then**
+   each output contains all required safety sections.
+2. **Given** any agent renderer, **When** compiled, **Then** the default git rules and stop conditions
+   are present and unchanged in meaning.
+
+---
+
+### Edge Cases
+
+- **Item missing required scope info**: compilation refuses or marks the gap rather than emitting an
+  unsafe (unscoped) prompt.
+- **Secret-like content in context**: excluded from the prompt and flagged, never rendered.
+- **Unknown agent name**: falls back to the generic renderer (with a note) rather than failing hard.
+- **Very large context**: the prompt stays scoped to the item; it does not dump the whole repo.
+
+---
+
+## Required Prompt Structure *(mandatory)*
+
+Every compiled prompt MUST contain these sections:
+
+```text
+Objective
+Repo-state verification
+Context
+Scope
+Allowed files
+Forbidden files
+Validation commands
+Git rules
+Stop conditions
+Final report format
+```
+
+### Default git rules (always included)
+
+```text
+- Do not commit unless explicitly requested.
+- Do not push unless explicitly requested.
+- Do not open a PR unless explicitly requested.
+- Stage named files only if staging is explicitly requested.
+- Never use git add -A.
+- Never use git add .
+- Do not modify secrets, credentials, environment files, or generated lockfiles unless explicitly allowed.
+```
+
+### Default stop conditions (always included)
+
+```text
+- Required files are missing.
+- Scope requires migration but the task did not allow migrations.
+- Public API shape must change but the contract update was not in scope.
+- Auth or tenant model is unclear.
+- Validation cannot run.
+- Unrelated test failures appear.
+```
+
+---
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+- **FR-001**: The compiler MUST turn a routed queue item into a prompt containing all required sections.
+- **FR-002**: The prompt MUST name the item's allowed files and forbidden files explicitly.
+- **FR-003**: The prompt MUST include the default git rules and default stop conditions (above).
+- **FR-004**: The prompt MUST be narrow and scope-limited — it MUST NOT instruct broad refactors or
+  whole-repo changes.
+- **FR-005**: The prompt MUST require a final report (files changed, summary, tests run, evidence used,
+  risks/gaps, git status, next safe action).
+- **FR-006**: The compiler MUST render for at least Claude, Codex, and a generic agent, with identical
+  safety guarantees across renderers.
+- **FR-007**: The prompt MUST NOT contain secrets; secret-like context MUST be excluded and flagged.
+- **FR-008**: The prompt MUST NOT instruct the agent to commit, push, merge, or auto-execute.
+- **FR-009**: If an item lacks required scope info, the compiler MUST refuse or mark the gap rather than
+  emit an unsafe prompt.
+- **FR-010**: An unknown agent name MUST fall back to the generic renderer with a note, not fail hard.
+- **FR-011**: Compilation MUST run with no network access and no credentials (local-first).
+- **FR-012**: The compiler MUST be domain-neutral — no Retail Tower/ERPNext/POS specifics.
+
+### Key Entities
+
+- **Prompt**: the compiled, scope-limited instruction set for an agent.
+- **Renderer**: an agent-specific formatter (claude/codex/generic) over the same safety contract.
+- **Queue Item** (from 005): the input the prompt is compiled from.
+
+---
+
+## CLI Surface *(mandatory)*
+
+```text
+tenantguard prompt <ID> --agent claude     compile a safe prompt for queue item <ID> for Claude
+tenantguard prompt <ID> --agent codex      compile a safe prompt for Codex
+tenantguard prompt <ID>                    compile a safe prompt for a generic agent
+```
+
+---
+
+## Required Outputs *(mandatory)*
+
+```text
+safe agent prompt   copy-paste-ready, scope-limited, all required sections present
+```
+
+---
+
+## Non-Goals *(mandatory)*
+
+```text
+- Executing the prompt or the agent (never in MVP).
+- Committing, pushing, or merging anything.
+- Multi-step agent orchestration or tool-calling design.
+- Storing/replaying prompt history (later/dashboard concern).
+- Exhaustive support for every agent on the market (claude/codex/generic for MVP).
+- Choosing a templating engine or language (decided at plan layer).
+- Retail Tower / ERPNext / POS-specific prompt content.
+```
+
+---
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: 100% of compiled prompts contain all required sections.
+- **SC-002**: 100% of compiled prompts name explicit allowed and forbidden files.
+- **SC-003**: 100% of compiled prompts include the default git rules and stop conditions.
+- **SC-004**: 0 compiled prompts contain secrets or instruct commit/push/merge.
+- **SC-005**: The same item compiled for claude, codex, and generic carries identical safety guarantees.
+- **SC-006**: An item missing scope info yields a refusal/marked-gap, never an unscoped prompt.
+- **SC-007**: Compilation runs with no network access and no credentials.
+
+---
+
+## Acceptance Criteria for This Feature *(mandatory)*
+
+- **AC-001**: The required prompt structure is fully specified.
+- **AC-002**: Default git rules and default stop conditions are specified and mandatory.
+- **AC-003**: Per-agent rendering (claude/codex/generic) with identical safety is specified.
+- **AC-004**: No-secrets and no-commit/push/merge guarantees are specified.
+- **AC-005**: Refusal-on-missing-scope and unknown-agent fallback behaviors are specified.
+- **AC-006**: CLI surface (`prompt`) and required output are defined.
+- **AC-007**: Non-goals are explicit (execution, mutation, orchestration, library choice).
+- **AC-008**: The spec is implementation-neutral on the templating engine (deferred to plan).
+- **AC-009**: No production code, compiler code, `package.json`, or lockfile is created.
+
+---
+
+## Assumptions
+
+- **Templating approach deferred** to plan/ADR. This spec mandates prompt *structure and safety*, not
+  the rendering engine or language.
+- **Agent set** for MVP is claude, codex, and generic; more renderers are additive later.
+- **Prompt output** is text suitable for copy-paste; whether it is also written to a file is a
+  plan-layer convenience, not a safety requirement.
+- **Final-report fields** match the constitution's required final report and the queue item's
+  `final_report.required[]`.
+- **"Scope info"** an item must have to be compilable = at least objective, allowed/forbidden files,
+  and validation; items lacking these are not safely compilable.
