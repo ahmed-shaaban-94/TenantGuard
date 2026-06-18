@@ -5,6 +5,7 @@ import { runGatesCommand } from "./commands/gates.js";
 import { runQueueCommand } from "./commands/queue.js";
 import { runRouteCommand } from "./commands/route.js";
 import { runPromptCommand } from "./commands/prompt.js";
+import { runReviewCommand } from "./commands/review.js";
 
 export { runScan } from "./commands/scan.js";
 export { runMap } from "./commands/map.js";
@@ -12,6 +13,7 @@ export { runGatesCommand } from "./commands/gates.js";
 export { runQueueCommand } from "./commands/queue.js";
 export { runRouteCommand } from "./commands/route.js";
 export { runPromptCommand } from "./commands/prompt.js";
+export { runReviewCommand } from "./commands/review.js";
 
 /** Build the `tenantguard` CLI program. Commands set process.exitCode (no hard process.exit). */
 export function buildProgram(): Command {
@@ -87,6 +89,24 @@ export function buildProgram(): Command {
     .action((id: string, opts: { agent?: string; out: string; stdout?: boolean }) => {
       process.exitCode = runPromptCommand(id, opts);
     });
+
+  program
+    .command("review-pr")
+    .description("Review a local diff (or GitHub PR) against the gates + declared scope → Ready / Not Ready / Needs Verification")
+    .argument("[target]", "target repo path (with --local-diff) or a PR number", ".")
+    .option("--local-diff", "review the current local working diff (no credentials)")
+    .option("--item <id>", "check changed files against this queue item's allowed/forbidden files")
+    .option("--out <dir>", "directory holding project-map.json (+ queue.json for --item); review.json/review.md written here", ".tenantguard")
+    .option("--stdout", "print the report only (do not write files)")
+    .option("--format <fmt>", "json | yaml", "json")
+    .action(
+      (
+        target: string,
+        opts: { localDiff?: boolean; item?: string; out: string; stdout?: boolean; format: "json" | "yaml" },
+      ) => {
+        process.exitCode = runReviewCommand(target, opts);
+      },
+    );
 
   return program;
 }
