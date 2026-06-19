@@ -30,7 +30,7 @@ One-line positioning:
 
 ## Current Phase
 
-Docs-first product foundation.
+Release-readiness and first-run demo hardening.
 
 Do not implement production code unless a reviewed spec, plan, and tasks file explicitly allow it.
 
@@ -207,5 +207,5 @@ Do not implement CLI scanner before the Project Map schema exists.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/009-launch-and-community-strategy/plan.md` (active feature: 009-launch-and-community-strategy).
+`specs/010-release-readiness-and-first-run-demo/plan.md` (active feature: 010-release-readiness-and-first-run-demo).
 <!-- SPECKIT END -->
