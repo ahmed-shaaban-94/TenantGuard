@@ -7,6 +7,8 @@ export type { ReviewDeps } from "./review.js";
 export { reviewPr } from "./pr.js";
 export type { PrReviewDeps } from "./pr.js";
 export { renderReport } from "./render.js";
+export { renderChecksPayload } from "./checks.js";
+export type { ChecksPayload, CheckAnnotation } from "./checks.js";
 export { changedFiles, GitUnavailableError } from "./git.js";
 export { prChangedFiles, prMetadata, GitHubUnavailableError } from "./gh.js";
 export { checkScope, SCOPE_SKIPPED } from "./scope.js";
