@@ -1,0 +1,7 @@
+{
+  "description": "An admin route with no role guard anywhere in the file fires G4 at confirmed (high confidence). Nothing else G4-scoped.",
+  "gates_under_test": ["TG-G4"],
+  "expected_findings": [
+    { "gate_id": "TG-G4", "path": "apps/api/admin.ts", "tier": "confirmed" }
+  ]
+}
