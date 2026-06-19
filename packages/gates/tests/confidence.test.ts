@@ -27,8 +27,6 @@ describe("confidenceTier", () => {
     expect(confidenceTier(risk("medium", "low"))).toBe("suspected");
   });
   it("suspected when evidence is empty (no proof)", () => {
-    expect(
-      confidenceTier({ gate_id: "TG-G4", status: "risk", severity: "high", evidence: [] }),
-    ).toBe("suspected");
+    expect(confidenceTier(risk())).toBe("suspected");
   });
 });
