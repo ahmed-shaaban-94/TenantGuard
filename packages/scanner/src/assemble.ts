@@ -3,6 +3,11 @@ import { SCHEMA_VERSION } from "@tenantguard/project-map";
 import type { RunNote } from "./types.js";
 import { detectStack } from "./detect/stack.js";
 import { detectRepos } from "./detect/repos.js";
+import { detectDataAccess } from "./detect/data-access.js";
+import { detectRoutes } from "./detect/routes.js";
+import { detectMigrations } from "./detect/migrations.js";
+import { detectAuth } from "./detect/auth.js";
+import { detectConfigSurface } from "./detect/config-surface.js";
 import { readFileSafe } from "./io.js";
 import { basename } from "node:path";
 
@@ -24,6 +29,14 @@ export function assemble(
 
   const stack = detectStack(root);
   const { repos } = detectRepos(root, listFiles);
+
+  // P1 deepened detection — read-only evidence detectors. Each emits normative Evidence[]; none
+  // judges (gates reason over these). All sorted by path then line for determinism.
+  const data_access = detectDataAccess(root, files);
+  const routes = detectRoutes(root, files);
+  const migrations = detectMigrations(root, files);
+  const auth = detectAuth(root, files);
+  const config_surface = detectConfigSurface(root, files);
 
   // Tenant model: best-effort, honest. Look for a tenant scoping marker; default not_detected.
   const hasTenantMarker = files.some((f) => {
@@ -72,6 +85,11 @@ export function assemble(
     boundaries: [], // MVP: best-effort; left empty/honest (FR-006)
     tenant_model,
     critical_surfaces,
+    data_access,
+    routes,
+    migrations,
+    auth,
+    config_surface,
   };
 
   // Honesty: when nothing meaningful was detected, record an insufficient-evidence note (FR-008).
