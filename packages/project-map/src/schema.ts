@@ -98,6 +98,11 @@ export const projectMapSchema = z
     boundaries: z.array(boundarySchema),
     tenant_model: tenantModelSchema,
     critical_surfaces: z.array(z.string()),
+    data_access: z.array(evidenceSchema).optional(),
+    routes: z.array(evidenceSchema).optional(),
+    migrations: z.array(evidenceSchema).optional(),
+    auth: z.array(evidenceSchema).optional(),
+    config_surface: z.array(evidenceSchema).optional(),
     metadata: metadataSchema,
   })
   .passthrough();
