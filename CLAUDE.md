@@ -38,7 +38,7 @@ Implementation is allowed only through reviewed spec, plan, and tasks files. Do 
 
 A report-only GitHub Action dogfood workflow exists (TenantGuard runs against its own repo and reports; it does not auto-fix or auto-merge).
 
-The GitHub App and hosted dashboard remain deferred.
+The "Fortify, then Expand" roadmap is approved (2026-06-21) and FORTIFY (P1–P3) is shipped. Per constitution v1.1.0, a **report-only GitHub App (P4)** is now an approved post-MVP surface — see `specs/014-github-app-report-only/`. It must stay report-only (Checks run + annotations only; no mutation), stateless, and secret-safe. The hosted dashboard / org view (P5) and any enforcing/blocking-merge check (P6) remain deferred and unapproved.
 
 ---
 
@@ -213,5 +213,5 @@ Do not implement CLI scanner before the Project Map schema exists.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/013-config-path-scope-enforcement/plan.md` (active feature: 013-config-path-scope-enforcement).
+`specs/014-github-app-report-only/plan.md` (active feature: 014-github-app-report-only).
 <!-- SPECKIT END -->

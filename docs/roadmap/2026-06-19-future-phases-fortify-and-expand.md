@@ -1,6 +1,6 @@
 # TenantGuard Future Phases — Fortify, then Expand
 
-Status: Brainstormed design, pending review
+Status: Approved 2026-06-21 (owner approval). FORTIFY (P1–P3) shipped; EXPAND begins with P4 (report-only GitHub App, spec 014).
 Date: 2026-06-19
 Scope: The roadmap layer **after** public launch. The near-term waves A–F
 (`docs/roadmap/post-foundation-technical-plan.md`: contracts → config → npm →
@@ -259,8 +259,11 @@ No broad rewrites.
 
 ## The single next action
 
-When this roadmap is approved, the first implementable slice is **P1** — and the
-first detector to add is the one that most directly unstarves the highest-value
-gate. Recommendation: start with `data-access` (feeds G4 tenant-isolation, the
-product's headline promise). Each detector ships as its own reviewed spec → plan
-→ tasks cycle, per the constitution's implementation boundary.
+This roadmap is approved (2026-06-21). FORTIFY (P1 deepen detection, P2 calibrate,
+P3 prove-it) is shipped, plus 013 config path scope. The next implementable slice is
+now **P4 — the report-only GitHub App** (spec `014-github-app-report-only`), which
+the merged Checks renderer was built to feed. Each phase ships as its own reviewed
+spec → plan → tasks cycle, per the constitution's implementation boundary.
+
+> Historical note: before approval, the original "single next action" was P1
+> (`data-access` detector). That FORTIFY work is complete; P4 is the current frontier.
