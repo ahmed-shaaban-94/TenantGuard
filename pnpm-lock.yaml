@@ -150,6 +150,9 @@ importers:
       '@tenantguard/github-app':
         specifier: workspace:*
         version: link:../github-app
+      '@tenantguard/scanner':
+        specifier: workspace:*
+        version: link:../scanner
       zod:
         specifier: ^3.24.1
         version: 3.25.76

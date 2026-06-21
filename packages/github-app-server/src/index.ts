@@ -12,6 +12,7 @@ export { dispatch, type DispatchDeps, type DispatchResult } from "./server.js";
 export { makeAuthToken, AuthError, type TokenMinter, type AuthTokenDeps } from "./auth.js";
 export { makeGitHubApi, type OctokitLike } from "./octokit-api.js";
 export { makeNodeGit } from "./node-git.js";
+export { prepareRepo } from "./prepare-repo.js";
 export {
   start,
   composeDeps,

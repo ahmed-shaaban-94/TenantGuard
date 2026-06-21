@@ -7,6 +7,7 @@ import { makeGitHubApi, type OctokitLike } from "./octokit-api.js";
 import { makeGitWorkspace } from "./git-workspace.js";
 import { makeNodeGit } from "./node-git.js";
 import { makeAuthToken } from "./auth.js";
+import { prepareRepo } from "./prepare-repo.js";
 import { dispatch, type DispatchDeps, type DispatchResult } from "./server.js";
 
 /** Max webhook body we will buffer. GitHub deliveries are small; this bounds memory per request. */
@@ -85,7 +86,9 @@ export function composeDeps(env: Record<string, string | undefined> = process.en
     authToken: makeAuthToken({ creds, installationId }),
   });
 
-  return { api, workspace, webhookSecret: creds.webhookSecret };
+  // Scan the checkout to produce its project-map before the gates run (closes the always-neutral
+  // defect — without this the gates never find a map and every review degrades to neutral).
+  return { api, workspace, webhookSecret: creds.webhookSecret, prepareRepo };
 }
 
 /**
