@@ -18,6 +18,13 @@ export interface GitWorkspaceDeps {
   authToken: () => Promise<string>;
   /** Base temp dir (default: OS tmp). Each event gets a fresh subdir. */
   tmpRoot?: string;
+  /**
+   * Build the fetch remote URL for a repo. Defaults to GitHub HTTPS. Injectable ONLY so tests can
+   * point at a local `file://` bare repo and exercise the REAL init→fetch→checkout sequence without a
+   * network — production never overrides it. The token is still passed via the in-memory extraheader
+   * regardless, never embedded here.
+   */
+  remoteUrl?: (owner: string, repo: string) => string;
 }
 
 /**
@@ -42,7 +49,7 @@ export function makeGitWorkspace(deps: GitWorkspaceDeps): Workspace {
         const token = await deps.authToken();
         // Token travels ONLY as an in-memory extraheader arg — never persisted to .git/config.
         const authHeader = `http.extraheader=AUTHORIZATION: basic ${Buffer.from(`x-access-token:${token}`).toString("base64")}`;
-        const url = `https://github.com/${owner}/${repo}.git`;
+        const url = deps.remoteUrl ? deps.remoteUrl(owner, repo) : `https://github.com/${owner}/${repo}.git`;
 
         const init = deps.git.run(["-c", authHeader, "init", "--quiet", dir], tmpRoot);
         if (init.code !== 0) throw new WorkspaceError("git init failed");
