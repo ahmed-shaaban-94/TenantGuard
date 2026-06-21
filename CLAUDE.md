@@ -213,5 +213,5 @@ Do not implement CLI scanner before the Project Map schema exists.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/014-github-app-report-only/plan.md` (active feature: 014-github-app-report-only).
+`specs/015-github-app-deployment/plan.md` (active feature: 015-github-app-deployment).
 <!-- SPECKIT END -->

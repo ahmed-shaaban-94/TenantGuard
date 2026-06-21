@@ -4,6 +4,9 @@
 
 export { verifySignature, parseEvent, WebhookSignatureError } from "./webhook.js";
 export { buildPayload, postCheck, type ChecksClient } from "./checks.js";
+// Re-export the Checks payload types so consumers of handleEvent/ChecksClient can name them
+// without reaching into @tenantguard/review directly (read-only re-export; no behavior change).
+export type { ChecksPayload, CheckAnnotation } from "@tenantguard/review";
 export {
   run,
   safeRun,
