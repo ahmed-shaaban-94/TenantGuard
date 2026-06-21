@@ -114,10 +114,20 @@ support: scan a local repo; detect project structure; produce `project-map.json`
 SaaS gates v0; produce `risks.json` and `queue.json`; select one next safest task;
 generate Claude/Codex-safe prompts; review local diffs; and emit Markdown + JSON reports.
 
-The MVP MUST NOT include: a hosted SaaS dashboard, billing/subscriptions, a GitHub App,
+The MVP MUST NOT include: a hosted SaaS dashboard, billing/subscriptions,
 direct AI-agent execution, auto-fix, auto-commit, auto-merge, an OPA/Rego policy engine,
 a full static-analysis engine, deep support for every language/framework, Retail Tower
 private domain logic, or ERPNext-specific rules.
+
+**Approved post-MVP surfaces (added v1.1.0, 2026-06-21):** The MVP is shipped/dogfooding
+and the "Fortify, then Expand" roadmap is owner-approved
+(`docs/roadmap/2026-06-19-future-phases-fortify-and-expand.md`). A **report-only GitHub
+App** is therefore an approved post-MVP surface (roadmap P4), subject to all standing
+principles: it MUST remain report-only (Principle VI — no commit/push/merge/auto-fix/
+agent-exec; its only write is a GitHub Checks run + annotations, which is not a repository
+mutation), stateless, and secret-safe (Principle VII). This approval covers P4 only; the
+hosted dashboard / org view (P5) and any enforcing/blocking-merge check (P6) remain
+deferred and unapproved.
 
 MVP success is demonstrated when this sequence works and produces a project map, risk
 list, derived queue, one next safe action, a safe agent prompt, and a PR/readiness report:
@@ -187,4 +197,11 @@ by Default (V), No Hidden Mutation (VI), and No Secrets (VII). Complexity or any
 MUST be justified in writing against the principle it strains. Use `CLAUDE.md` for runtime
 development guidance; it MUST remain consistent with this constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-18 | **Last Amended**: 2026-06-18
+**Version**: 1.1.0 | **Ratified**: 2026-06-18 | **Last Amended**: 2026-06-21
+
+> Amendment 1.1.0 (2026-06-21, owner-approved): MVP declared shipped/dogfooding and the
+> Fortify-then-Expand roadmap approved; a report-only GitHub App moved from MVP MUST-NOT
+> to an approved post-MVP surface (P4 only). MINOR bump — adds an approved surface; no
+> principle removed or redefined. Mutation, statelessness, and secret rules unchanged.
+> Propagated to: CLAUDE.md (Current Phase), specs/014-github-app-report-only/plan.md
+> (governance gate cleared). Templates unaffected (no principle meaning changed).
