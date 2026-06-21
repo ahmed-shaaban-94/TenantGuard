@@ -64,6 +64,18 @@ describe("dispatch (US1 happy path)", () => {
     await dispatch(body(), sign(body()), deps(api));
     expect(api.writes.every((w) => w === "createCheckRun" || w === "updateCheckRun")).toBe(true);
   });
+
+  it("redelivery of the same head UPDATES the existing check — never a second create (FR-012)", async () => {
+    // GitHub redelivers on transient failures. The 014 postCheck idempotency is unit-tested, but
+    // this proves it through the SERVER's dispatch → makeChecksClient(api) adapter: findCheckRun
+    // surfaces an existing id, so the path must route to updateCheckRun, NOT createCheckRun. A broken
+    // adapter (e.g. findCheck not wired) would silently double-create — only this test catches it.
+    const api = fakeApi({ async findCheckRun() { return { id: 99 }; } });
+    const res = await dispatch(body(), sign(body()), deps(api));
+    expect(res.status).toBe(200);
+    expect(api.writes).toEqual(["updateCheckRun"]); // updated, not created
+    expect(api.writes).not.toContain("createCheckRun");
+  });
 });
 
 describe("dispatch (US3 honest degradation)", () => {

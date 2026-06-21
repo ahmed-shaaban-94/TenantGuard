@@ -19,6 +19,9 @@ import type { DispatchDeps } from "../src/server.js";
 const SECRET = "webhook-secret";
 const sign = (b: string) => `sha256=${createHmac("sha256", SECRET).update(b).digest("hex")}`;
 
+/** Minimal shape of the posted Checks payload the assertions read. */
+type ChecksPayloadShape = { conclusion: string; annotations: Array<{ path: string }> };
+
 const dirs: string[] = [];
 afterEach(() => {
   for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
@@ -35,6 +38,27 @@ function makeRealRepo(): string {
   mkdirSync(join(dir, "apps", "api"), { recursive: true });
   writeFileSync(join(dir, "apps", "api", "index.ts"), "export const x = 1;\n");
   writeFileSync(join(dir, "README.md"), "# real repo\n");
+  git("add", "-A");
+  git("commit", "--quiet", "-m", "init");
+  return dir;
+}
+
+/**
+ * A repo whose changed file is an admin route with NO role guard anywhere in the file. G4-Security
+ * emits a high-confidence (confirmed) finding for this → verdict not_ready → Checks `failure`. This
+ * is the simplest deterministic high-confidence trigger that needs no queue item / declared map.
+ */
+function makeRepoWithUnguardedAdminRoute(): string {
+  const dir = mkdtempSync(join(tmpdir(), "tg-realrepo-bad-"));
+  dirs.push(dir);
+  const git = (...a: string[]) => execFileSync("git", a, { cwd: dir, stdio: "pipe" });
+  git("init", "--quiet");
+  git("config", "user.email", "t@t.test");
+  git("config", "user.name", "t");
+  mkdirSync(join(dir, "apps", "api", "routes"), { recursive: true });
+  // Admin route, no requireRole/isAdmin/hasRole/checkRole/authorize token anywhere → confidence:high.
+  writeFileSync(join(dir, "apps", "api", "routes", "admin.ts"), "app.get('/admin', (req, res) => res.send('hi'));\n");
+  writeFileSync(join(dir, "README.md"), "# repo with unguarded admin route\n");
   git("add", "-A");
   git("commit", "--quiet", "-m", "init");
   return dir;
@@ -104,6 +128,59 @@ describe("REAL scan + REAL gates over a REAL checkout (regression guard for alwa
     // A real render occurred → a valid conclusion (proves it wasn't an error-fallback).
     const parsed = JSON.parse(posted) as { conclusion: string };
     expect(["success", "neutral", "failure"]).toContain(parsed.conclusion);
+  });
+
+  it("a CONFIRMED finding in a changed file → conclusion `failure` with an annotation at that file (verdict correctness)", async () => {
+    // G4: unguarded admin route → high-confidence → confirmed → not_ready → failure. The changed-set
+    // MUST include the file (attribution: a finding only blocks if its path is in the changed set).
+    const ADMIN = "apps/api/routes/admin.ts";
+    const repo = makeRepoWithUnguardedAdminRoute();
+    let posted: ChecksPayloadShape | undefined;
+    const recordingApi: GitHubApi = {
+      ...api([ADMIN]),
+      async createCheckRun(args) {
+        posted = args.payload as unknown as ChecksPayloadShape;
+        return { id: 1 };
+      },
+    };
+    const deps: DispatchDeps = {
+      api: recordingApi,
+      workspace: realWorkspace(repo),
+      webhookSecret: SECRET,
+      prepareRepo,
+    };
+
+    const res = await handleRequest(body, sign(body), deps);
+
+    expect(res.status).toBe(200);
+    expect(posted?.conclusion).toBe("failure"); // a real confirmed finding blocks — not neutral
+    // The annotation points at the offending changed file (proves attribution wired correctly).
+    expect(posted?.annotations.some((a) => a.path === ADMIN)).toBe(true);
+  });
+
+  it("a CLEAN changed file (no risky pattern) → conclusion `success`", async () => {
+    // makeRealRepo plants only a trivial `export const x = 1`; nothing triggers a confirmed finding.
+    const CLEAN = "apps/api/index.ts";
+    const repo = makeRealRepo();
+    let posted: ChecksPayloadShape | undefined;
+    const recordingApi: GitHubApi = {
+      ...api([CLEAN]),
+      async createCheckRun(args) {
+        posted = args.payload as unknown as ChecksPayloadShape;
+        return { id: 1 };
+      },
+    };
+    const deps: DispatchDeps = {
+      api: recordingApi,
+      workspace: realWorkspace(repo),
+      webhookSecret: SECRET,
+      prepareRepo,
+    };
+
+    const res = await handleRequest(body, sign(body), deps);
+
+    expect(res.status).toBe(200);
+    expect(posted?.conclusion).toBe("success");
   });
 
   it("a scan failure concludes neutral WITHOUT leaking the absolute checkout path into the summary", async () => {
